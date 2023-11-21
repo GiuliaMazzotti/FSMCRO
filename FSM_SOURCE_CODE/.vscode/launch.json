@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations":[
+        {
+            "name": "Run GDB",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}\\FSM2.exe",
+            "args": ["D:\\EXE_FSM\\FSM_20221028-17-28-55-349\\001\\OPTIONS.nam"],
+            "stopAtEntry": false,
+            "cwd": "D:\\EXE_FSM\\FSM_20221028-17-28-55-349\\001\\",
+            "miDebuggerPath": "gdb.exe",
+            "preLaunchTask": "compile_FSM",
+
+        }
+    ]
+}
