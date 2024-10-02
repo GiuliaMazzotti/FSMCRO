@@ -1,14 +1,31 @@
 # FSMCRO - Combining the FSM2oshd model and the externalized Crocus model into one system
 
+## General
+
+This repository includes the model FSMCRO, presented in the following publication: 
+
+Mazzotti, G., Nousu, J.-P., Vionnet, V., Jonas, T., Nheili, R., and Lafaysse, M.: Exploring the potential of forest snow modelling at the tree and snowpack layer scale, EGUsphere [preprint], https://doi.org/10.5194/egusphere-2023-2781, 2023
+
+The paper has been accepted for publication in The Cryosphere, an updated reference will be provided once available. Please refer to this article when using the model. 
+
+## Contents
+
 - FSM_SOURCE_CODE contains the source FORTRAN code for FSM.
 
-- SHELL_SCRIPTS contains wrapper scripts
+- SHELL_SCRIPTS contains wrapper scripts created to run the code on Linux
 
 - OPTIONS_NAM contains default namelist files 
 
 ## Dependencies
 
-This code is based on two 
+As described in the paper, the FSMCRO model is a merge of two snow models, FSM2 and Crocus. 
+The FSM2 code is based on: https://github.com/oshd-slf/FSM2oshd
+The Crocus standalone version is available at: https://opensource.umr-cnrm.fr/projects/surfex_git2/wiki/Install_standalone_version_of_Crocus#:~:text=Install%20standalone%20version%20of%20Crocus%C2%B6%20For
+
+This codebase is self-sufficient, but future users should keep an eye on developments in both repositories. In particular, updates to the standalone Crocus version can be ported to FSMCRO by replacing the precompiled files in obj. 
+When doing so, it the necessity for changes to the wrapper scripts should be checked. This repo branched off SLF-OSHD's operational repository in 2022, see branch 'fsmcro_sandbox'.
+
+The wrapper scripts provided as examples here rely on functions from the snowtools repository: https://github.com/UMR-CNRM/snowtools
 
 ## How to run the models
 
@@ -17,62 +34,33 @@ This code is based on two
 Clone this repository:
 
 ```
-git clone https://github.com/oshd-slf/jim_operational.git
+git clone https://github.com/GiuliaMazzotti/FSMCRO.git
 ```
 
-### Compiling FSM
-Install a 32bit version of MinGW, with gfortran >=6.3.0.
-The batch file for compiling FSM is in `FSM_SOURCE_FOLDER/code/compil_FSM.bat`. It handles two *positional* arguments:
- * default behavior is with optimization level `-O3`
- * _gfortran optimization_ of computations (no argument : default behavior, poor performance but very verbose error messages, `-O3` offers the best performance but the least verbosity, `-O2` intermediate performance and verbosity).
- *  _gprof profiling_ of execution as a second positional argument after optimizatino(to evaluate code performance): (type e.g. `-O0 -pg` if you want to activate profiling combined with low optimization).
+### Compiling FSMCRO
+Compilation requires gfortran and has been tested on Linux. 
+Run the script compil_FSMCRO.sh found in 'FSM_SOURCE_FOLDER/code'.
+This compilation step also links the precompiled obj files that constitute the standalone Crocus.
 
-__Recommandation for operational purposes__:
-1. open a command window and move to FSM_SOURCE_CODE/code/
-2. `compil_FSM.bat`
+In case users wish to update FSMCRO with the latest version of Crocus, the instructions on the Crocus repository should be followed. 
+Potentially, this will require adaptations to the coupling subroutines in the FSMCRO fortran code (and recompilation)
 
 ### Running FSM
-Run FSM using one of the start scripts in `MATLAB_SCRIPTS\SCRIPTS\` (e.g. `start_POINT.m`, `start_SPATIAL.m`).
+FSMCRO can be run directly from the command line by calling ./FSMCRO OPTIONS.nam, where 'OPTIONS.nam' is the filename of the namelist to be used. 
+It is recommended to create a run directory including all meteo input files, landuse files, the namelist and the program. By default, output files will be written in the same directory as the program.
+The models run faster when reading forcing data from a local drive.  
 
 #### Namelist
 Namelists are used to set the model configuration, number of points, and list of output variables.
-Default operational namelists are stored in `FSM_SOURCE_CODE\nslt\`.
+Default namelists for runs in forest and open terrains are stored in OPTIONS_CRO_for.nam
 
 #### Input data
-* forcings: @TODO
-* terrain/landuse: stored in `SOURCE\`
-* initial snow conditions: @TODO
+* forcings: provided as .bin files, one variable per file 
+* terrain/landuse: provided as .bin files, one variable per file 
+* initial snow conditions: the snowpack is renitialized in each simulation. reinitialization from existing snowpack pending. 
 
 #### Output variables
-The wrapper writes input and output variables (state variables and diagnostics) into `MODELDATA_*_FSM22.mat files`. The operational lists of output variables are written in `SOURCE\Simulation_Settings_FSM.m` and can be overwritten in any of the start scripts. Description fields for the variables can be accessed via MATLAB_SCRIPT/varname_to_desc.m (see doc in header).
-
-## Copy forcing data to local drive
-
-The models run faster when reading forcing data from a local drive. Below is an example script using `robocopy` for fast and incremental copying of files from network drives to a local folder. Put these commands in a batch-file.
-
-```
-rem @echo off
-
-Robocopy I:\DATA_COSMO\PROCESSED_GRID_ANALYSIS D:\DATA_COSMO\PROCESSED_GRID_ANALYSIS /E
-Robocopy K:\DATA_COSMO\PROCESSED_GRID_ANALYSIS D:\DATA_COSMO\PROCESSED_GRID_ANALYSIS /E
-
-Robocopy I:\DATA_COSMO\PROCESSED_STAT_ANALYSIS D:\DATA_COSMO\PROCESSED_STAT_ANALYSIS /E
-Robocopy K:\DATA_COSMO\PROCESSED_STAT_ANALYSIS D:\DATA_COSMO\PROCESSED_STAT_ANALYSIS /E
-
-Robocopy I:\DATA_COSMO\PROCESSED_STAT_FARCHIVE D:\DATA_COSMO\PROCESSED_STAT_FARCHIVE /E
-Robocopy K:\DATA_COSMO\PROCESSED_STAT_FARCHIVE D:\DATA_COSMO\PROCESSED_STAT_FARCHIVE /E
-
-Robocopy I:\DATA_COSMO\PROCESSED_STAT_FORECAST D:\DATA_COSMO\PROCESSED_STAT_FORECAST /E
-Robocopy K:\DATA_COSMO\PROCESSED_STAT_FORECAST D:\DATA_COSMO\PROCESSED_STAT_FORECAST /E
-
-pause
-```
-
-# FSM-CRO research model
-
-This branch (originally: fsmcro_sandbox branch) includes the added functionality of using the Crocus snow model instead of the FSM snow routine. Originally intended for research project on hyper-res tree- and snow-layer resolving model (SNF mobility project Giulia)
-
-Developments started in 2022, branching off from the 2022 operational repository version and the hyper-resolution modelling capabilities Maintained for use in publication 'Exploring the potential of forest snow modelling at the tree and snowpack layer scale', in prep. 
+The wrapper writes input and output variables (state variables and diagnostics) into .bin files
 
 ## Technicalities: coupling FSM and Crocus codes
 
@@ -82,21 +70,19 @@ A standalone version of Crocus, intended to allow its use independent of the SUR
 
 This way of manually linking the FSM and Crocus repositories may seem cumbersome, but it's the simplest way to keep developments in the two models separate and independent. At every update of EXT-CROCUS in the Surfex repository, updates can be pulled and the standalone Crocus recompiled. Changes are ported to the FSM repository (jim_operational) by replacing contents of the ./obj subdirectory with their updated version and recompiling. Every update of the ./obj subdirectory can be pushed as commit in the jim_operational repository to keep track of these updates. Ideally, these commits should include ONLY the updates to the ./obj subdirectories, while potential required changes to the FSM-CRO code that ensure the compatibility with EXT-CROCUS updates should constitute follow-up commits.
 
-### Compiling and running FSM-CRO
+### Compiling FSM-CRO
 
-Compiling FSM-CRO requires its own compilation script, available as compil_FSMCRO.sh. This was separated from compil_FSM in the inital stages of development because it had to be structured a bit differently than the FSM compilation script Once FSM and FSM-CRO are fully integrated, this script could be obsolete. 
-
-Consequently, the compil_FSMCRO.sh script compiles the program FSMCRO.exe rather than FSM2.exe. Also this could become obsolete at some point.
+Compiling FSM-CRO requires its own compilation script, available as compil_FSMCRO.sh. This was separated from compil_FSM in the inital stages of development because it had to be structured a bit differently than the FSM compilation script Once FSM and FSM-CRO are fully integrated, this script could be obsolete. Consequently, the compil_FSMCRO.sh script compiles the program FSMCRO.exe rather than FSM2.exe. 
 
 Note that the compilation of FSMCRO is done a bit differently than for FSM. in the FSM compilation script, the compilation and the linking steps are merged into one and the executable is created in the same command. In FSMCRO, since .o files are already available from EXT-CROCUS, we first create equivalent .o files from the FSM .F90 files, and then link all of them to create the FSMCRO.exe executable. 
 
-FSMCRO is run the same way as FSM, by passing one namelist file. In a terminal: S ./FSMCRO OPTIONS.nam
 
 ### Fortran code changes
 
-- FSMCRO.F90: added main program including call to CRO_SETUP
+- FSMCRO.F90: added main program including call to CRO_SETUP (used instead of the original FSM.F90)
 - CRO_MODUL: defines Crocus-specific modules
 - CRO_SETUP: initialization of Crocus-specific stuff prior to timeloop
+- CRO_COUP: subroutine coupling the standalone Crocus to the FSM model. 
 
 ### FSM-CRO specific model switches (namelist options)
 
@@ -131,7 +117,6 @@ The capability to run ensembles by combining alternative snow process/properties
 Unloading snow is either added as rain or fresh snow because Crocus can only take that. Adding a unloading snow mass flux would be interesting and would potentially have visible impacts on snowpack evolution. Axel started doing this in Surfex, reconsider once ported to EXT-CROCUS...
 
 Some ESCROC ensemble options dont work yet: Flanner metamorphism, Tartes...
-
 
 Cosmetics: could organize the writing of Crocus-specific outputs and layer-scale outputs better. Also, there is currently no possibility to start a simulation from given initial Crocus-specific states (or existing FSM snowpack)
 
