@@ -1,0 +1,8 @@
+ISSUES
+
+GM / 11.12.2024
+
+... open to do's when cleaning up MF pc
+
+1) Namelists for FSM were just work in progress tests, potentially not fully operational
+2) The bugfix done during reviews was only implemented in the jim_operational repository, branch fsmcro_sandbox. need to be ported here... see commits
